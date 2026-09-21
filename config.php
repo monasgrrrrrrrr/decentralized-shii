@@ -64,6 +64,25 @@ define('SUPPORT_EMAIL', 'contact@decenttrustattorneys.com');
 define('SUPPORT_PHONE', '(307) 555-0123');
 
 // ---- Session ----
+// Ensure the session save path exists and is writable. PHP's built-in server
+// (`php -S`, which we use on Railway) can fail silently with the default
+// system session path if that directory is read-only or missing, which
+// breaks all logins and flash messages with no obvious error.
+$__sessionDir = __DIR__ . '/tmp/sessions';
+if (!is_dir($__sessionDir)) {
+    @mkdir($__sessionDir, 0755, true);
+}
+if (is_dir($__sessionDir) && is_writable($__sessionDir)) {
+    session_save_path($__sessionDir);
+}
+// Use same-site cookies so session cookies survive cross-page navigation.
+if (PHP_VERSION_ID >= 70300) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path'     => '/',
+        'samesite' => 'Lax',
+    ]);
+}
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }

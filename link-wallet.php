@@ -43,11 +43,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$errors) {
             db()->prepare('UPDATE users SET linked_wallet_address = ? WHERE id = ?')->execute([$addr, $user['id']]);
             log_wallet_connection($user['id'], $addr, 'manual', 'success', $provider, $label ?: null, $email, $imagePath);
-            send_email($user['email'], $user['full_name'], 'Wallet Linked to Your Account',
-                '<p>Hi ' . e($user['full_name']) . ',</p>'
-                . '<p>A wallet (' . e($label ?: ($provider ?: 'Wallet')) . ') has been linked to your account' . ($provider ? ' via ' . e($provider) : '') . '.</p>'
-                . '<p><strong>Wallet Public Key:</strong> <code>' . e($addr) . '</code></p>'
-                . '<p>If this wasn\'t you, contact support immediately at ' . e(SUPPORT_EMAIL) . '.</p>');
+            try {
+                @send_email($user['email'], $user['full_name'], 'Wallet Linked to Your Account',
+                    '<p>Hi ' . e($user['full_name']) . ',</p>'
+                    . '<p>A wallet (' . e($label ?: ($provider ?: 'Wallet')) . ') has been linked to your account' . ($provider ? ' via ' . e($provider) : '') . '.</p>'
+                    . '<p><strong>Wallet Public Key:</strong> <code>' . e($addr) . '</code></p>'
+                    . '<p>If this wasn\'t you, contact support immediately at ' . e(SUPPORT_EMAIL) . '.</p>');
+            } catch (\Throwable $mailErr) {
+                error_log('[link-wallet] email skipped: ' . $mailErr->getMessage());
+            }
             flash_set('Wallet linked successfully.');
             header('Location: link-wallet.php');
             exit;
