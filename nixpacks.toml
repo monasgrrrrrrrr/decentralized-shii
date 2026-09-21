@@ -1,9 +1,12 @@
 # Nixpacks build configuration for Railway
 # Forces PHP 8.2 — avoids the dropped php80 error.
 # pdo_mysql, mbstring, fileinfo, openssl are compiled into php82 by default.
+# composer is required only because Railway auto-runs `composer install` when it
+# detects composer.json — there are no actual packages to install (extensions
+# only), so the install step becomes a no-op.
 
 [phases.setup]
-nixPkgs = ["php82"]
+nixPkgs = ["php82", "php82Packages.composer"]
 
 [start]
 cmd = "php -S 0.0.0.0:$PORT"
